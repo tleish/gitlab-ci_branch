@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'gitlab/ci_branch'
+require 'optparse'
+
+
+# puts ARGV.inspect
+
+Gitlab::CiBranch::Command.execute

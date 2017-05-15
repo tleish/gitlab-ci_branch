@@ -1,0 +1,7 @@
+gitlab:
+  api_private_token: Abc123
+  api_endpoint: https://gitlab.com/api/v4
+  gitlab_api_httparty_options: "{verify: false}"
+  format: "**%{runner} [%{level}]:** %{msg}"
+max_warnings: 150
+verbose: false
