@@ -20,7 +20,7 @@ module Gitlab
       private
 
       def remote_branches
-        `git branch --list --remotes`.split("\n").map(&:strip)
+        `git branch --list --remotes | grep -v ' -> '`.split("\n").map(&:strip)
       end
     end
 
