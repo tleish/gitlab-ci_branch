@@ -13,33 +13,37 @@ module Gitlab
       def initialize
         @options = {
           merge_requests: false,
-          closest_to: [],
+          closest_to: '',
           api_endpoint: guess_api_endpoint,
           api_private_token: guess_api_private_token,
         }
-
+        @git_branch = Gitlab::CiBranch::GitBranch.new
       end
 
       def self.execute
         cmd = self.new
-        cmd.parse_options
         cmd.setup
         cmd.run
       end
 
       def run
         branches = []
-        branches += Gitlab::CiBranch::MergeRequests.new.target_branches if @options[:merge_requests]
-        branches += Gitlab::CiBranch::Nearest.new(@options[:closest_to]).branch unless @options[:closest_to].empty?
+        branches += target_branches
+        branches += nearest
+        output = branches.uniq.join(',')
         puts branches.uniq.join(',')
+        output
       end
 
       def setup
+        parse_options
         Gitlab.configure do |config|
           config.endpoint = @options[:api_endpoint] if @options[:api_endpoint]
           config.private_token = @options[:api_private_token] if @options[:api_private_token]
         end
       end
+
+      private
 
       def parse_options
         OptionParser.new do |opts|
@@ -58,13 +62,27 @@ module Gitlab
           end
 
           opts.on('-c', '--closest_to=comma,seperated,branch,list', 'Return single closest branch from list') do |v|
-            @options[:closest_to] = v.split(',').map(&:strip)
+            @options[:closest_to] = v
           end
 
         end.parse!
       end
 
-      private
+      def nearest
+        return [] if @options[:closest_to].to_s.empty?
+        branches = @options[:closest_to].split(',').
+            map(&:strip).
+            map { |branch| @git_branch.find_by(branch) }.
+            compact
+        git_distance = Gitlab::CiBranch::GitDistance.new
+        Gitlab::CiBranch::Nearest.new(branches, git_distance).branch
+      end
+
+      def target_branches
+        return [] unless @options[:merge_requests]
+        branches = Gitlab::CiBranch::MergeRequests.new.target_branches
+        branches.map { |branch| @git_branch.find_by(branch) }.compact
+      end
 
       def guess_api_endpoint
         pronto['api_endpoint'] || ENV['GITLAB_API_ENDPOINT'] || api_from_ci_project_url
