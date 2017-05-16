@@ -16,6 +16,7 @@ module Gitlab
           closest_to: '',
           api_endpoint: guess_api_endpoint,
           api_private_token: guess_api_private_token,
+          api_project_id: guess_api_project_id,
         }
         @git_branch = Gitlab::CiBranch::GitBranch.new
       end
@@ -57,6 +58,10 @@ module Gitlab
             @options[:api_private_token] = v
           end
 
+          opts.on('--api_slug=id', 'Gitlab API Project ID') do |v|
+            @options[:api_slug] = v
+          end
+
           opts.on('-m', '--merge_requests', 'Return Branches for All Merge Requests') do
             @options[:merge_requests] = true
           end
@@ -80,7 +85,7 @@ module Gitlab
 
       def target_branches
         return [] unless @options[:merge_requests]
-        branches = Gitlab::CiBranch::MergeRequests.new.target_branches
+        branches = Gitlab::CiBranch::MergeRequests.new(project_id:@options[:api_project_id]).target_branches
         branches.map { |branch| @git_branch.find_by(branch) }.compact
       end
 
@@ -94,6 +99,10 @@ module Gitlab
 
       def guess_api_private_token
         pronto['api_private_token'] || ENV['GITLAB_API_PRIVATE_TOKEN']
+      end
+
+      def guess_api_project_id
+        ENV['CI_PROJECT_ID'] || pronto['slug']
       end
 
       def pronto
