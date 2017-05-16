@@ -85,7 +85,7 @@ module Gitlab
 
       def target_branches
         return [] unless @options[:merge_requests]
-        branches = Gitlab::CiBranch::MergeRequests.new(project_id:@options[:api_project_id]).target_branches
+        branches = Gitlab::CiBranch::MergeRequests.new(project_id: @options[:api_project_id]).target_branches
         branches.map { |branch| @git_branch.find_by(branch) }.compact
       end
 
