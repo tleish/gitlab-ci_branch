@@ -13,7 +13,6 @@ module Gitlab
       end
 
       def find_by(name)
-        puts @branches.inspect
         needle = name.include?('/') ? name : "/#{name}"
         find { |branch| branch.end_with?(needle) }
       end
