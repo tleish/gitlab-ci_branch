@@ -12,8 +12,7 @@ module Gitlab
 
       def initialize
         @options = {
-          merge_requests: false,
-          closest_to: '',
+          default_branches: 'master',
           api_endpoint: guess_api_endpoint,
           api_private_token: guess_api_private_token,
           api_project_id: guess_api_project_id,
@@ -30,7 +29,7 @@ module Gitlab
       def run
         branches = []
         branches += target_branches
-        branches += nearest
+        branches += nearest if branches.empty?
         output = branches.uniq.join(',')
         puts branches.uniq.join(',')
         output
@@ -38,6 +37,7 @@ module Gitlab
 
       def setup
         parse_options
+        validate_api_config
         Gitlab.configure do |config|
           config.endpoint = @options[:api_endpoint] if @options[:api_endpoint]
           config.private_token = @options[:api_private_token] if @options[:api_private_token]
@@ -46,36 +46,45 @@ module Gitlab
 
       private
 
+      def validate_api_config
+        [:api_endpoint, :api_private_token, :api_project_id].each do |option|
+          next unless @options[option].to_s.empty?
+          puts "Error: #{option} is not defined. See README."
+          exit
+        end
+        return unless @options[:api_endpoint].to_s.empty? || @options[:api_private_token].to_s.empty?
+      end
+
       def parse_options
         OptionParser.new do |opts|
-          opts.banner = 'Usage: example.rb [options]'
+          opts.banner = 'Usage: gitlab-ci-branch [options]'
 
-          opts.on('--api_endpoint=url', 'Gitlab API Endpoint') do |v|
+          default_branches_desc = 'Comma seperated list of branches to fallback to if there are no merge requests. ' +
+                                  'This tool will try and determine the closest single branch and use it for comparison. ' +
+                                  '(Optional, Default = master)'
+
+          opts.on('-d', '--default_branches=branches', default_branches_desc) do |v|
+            @options[:default_branches] = v
+          end
+
+          opts.on('--api_endpoint=url', 'Gitlab API Endpoint (optional)') do |v|
             @options[:api_endpoint] = v
           end
 
-          opts.on('--api_private_token=token', 'Gitlab API Token') do |v|
+          opts.on('--api_private_token=token', 'Gitlab API Token (optional)') do |v|
             @options[:api_private_token] = v
           end
 
-          opts.on('--api_slug=id', 'Gitlab API Project ID') do |v|
-            @options[:api_slug] = v
-          end
-
-          opts.on('-m', '--merge_requests', 'Return Branches for All Merge Requests') do
-            @options[:merge_requests] = true
-          end
-
-          opts.on('-c', '--closest_to=comma,seperated,branch,list', 'Return single closest branch from list') do |v|
-            @options[:closest_to] = v
+          opts.on('--api_project_id=id', 'Gitlab API Project ID (optional)') do |v|
+            @options[:api_project_id] = v
           end
 
         end.parse!
       end
 
       def nearest
-        return [] if @options[:closest_to].to_s.empty?
-        branches = @options[:closest_to].split(',').
+        return [] if @options[:default_branches].empty?
+        branches = @options[:default_branches].split(',').
             map(&:strip).
             map { |branch| @git_branch.find_by(branch) }.
             compact
@@ -84,7 +93,6 @@ module Gitlab
       end
 
       def target_branches
-        return [] unless @options[:merge_requests]
         branches = Gitlab::CiBranch::MergeRequests.new(project_id: @options[:api_project_id]).target_branches
         branches.map { |branch| @git_branch.find_by(branch) }.compact
       end

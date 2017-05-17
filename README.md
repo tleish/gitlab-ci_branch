@@ -1,8 +1,6 @@
 # Gitlab::CiBranch
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ps/ci_tools`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Prints comma seperated list of branches to use for Gitlab CI in order to determine which branches have merge requests against them.
 
 ## Installation
 
@@ -29,15 +27,70 @@ gitlab-ci-branch [options]
 
 ```
 
-## Development
+## Options
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment. Run `bundle exec gitlab-ci_branch` to use the gem in this directory, ignoring other installed copies of this gem.
+* -d, --default_branches=branches  
+  Comma seperated list of branches to fallback to if there are no merge requests. This tool will try and determine the closest single branch and use it for comparison. (Optional, default = master)
+*  --api_endpoint=url
+  Gitlab API Endpoint (optional)
+* --api_private_token=token
+  Gitlab API Token (optional)
+* --api_project_id=id
+  Gitlab API Project ID (optional)
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+## Example
 
-## Contributing
+```
+$ gitlab-ci-branch --default_branches=develop,master
+=> origin/master,origin/develop
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/tleish/gitlab-ci_branch.
+```
+
+## No Merge Branches
+
+If no merge branches are found, then it will return 'master' or another closer branch as specified by the --default_branches option.
+
+## API Credentials
+
+API credentials must be defined in order to access Gitlabs API.  They can be defined in 1 of 3 ways.
+
+### Options 
+
+(see options)
+
+### Pronto Config
+
+If a .pronto.yml config file is in the root of the project and has Gitlab API parameters, this gem will use those parameters instead of Gitlab API flags passed into the tool
+
+.pronto.yml Example:
+```
+gitlab:
+  slug: 1234567 # gitlab's project ID
+  api_private_token: 46751
+  api_endpoint: https://api.vinted.com/gitlab
+```
+see: https://github.com/prontolabs/pronto 
+
+### Environment Variables
+
+```
+export GITLAB_API_ENDPOINT=https://api.vinted.com/gitlab
+export GITLAB_API_PRIVATE_TOKEN=https://api.vinted.com/gitlab
+```
+
+Note: Both api_endpoint and api_project_id can sometimes be guessed using Gitlabs CI environment variables and therefore sometimes are not needed.
 
 
+## .gitlab-ci.yml Example
 
+```
+before_script:
+  - echo 'gem "gitlab-ci_branch", :git => "https://github.com/tleish/gitlab-ci_branch.git", :group => :development' >> Gemfile
+  - bundle install
+  - export BRANCHES=$(bundle exec gitlab-ci-branch --default_branches=develop,master)
+  - echo $BRANCHES
+
+brakeman:
+  script:
+    - for branch in ${BRANCHES//,/ }; do echo $branch; pronto run --formatters=gitlab text --commit="$branch" --runner=brakeman --exit-code; done
+```
