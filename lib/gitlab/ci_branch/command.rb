@@ -29,7 +29,7 @@ module Gitlab
       def run
         branches = []
         branches += target_branches
-        branches += nearest if branches.empty?
+        # branches += nearest if branches.empty?
         output = branches.uniq.join(',')
         puts branches.uniq.join(',')
         output
