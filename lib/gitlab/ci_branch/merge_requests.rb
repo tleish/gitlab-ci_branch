@@ -13,7 +13,7 @@ module Gitlab
       end
 
       def merge_results
-        merge_requests.select { |merge_request| merge_request.source_branch == current_branch}
+        merge_requests.select { |merge_request| merge_request.sha == current_sha}
       end
 
       def merge_requests
@@ -22,8 +22,8 @@ module Gitlab
 
       private
 
-      def current_branch
-        @current_branch ||= ENV['CI_COMMIT_REF_NAME'] || `git rev-parse --abbrev-ref HEAD`.strip
+      def current_sha
+        @current_sha ||= ENV['CI_COMMIT_SHA'] || `git rev-parse HEAD`.strip
       end
     end
   end

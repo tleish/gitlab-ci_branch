@@ -7,7 +7,7 @@ describe Gitlab::CiBranch::Command do
   MOCK_WORKING_DIRECTORY = File.join(ROOT_APP_PATH, 'test/mocks/')
 
   def setup
-    ENV['CI_COMMIT_REF_NAME'] = 'source-branch'
+    ENV['CI_COMMIT_SHA'] = '13245'
   end
 
   it "Return an empty array of branches if nothing found" do
@@ -29,9 +29,9 @@ describe Gitlab::CiBranch::Command do
 
   def ret_val_with_branches
     [
-      OpenStruct.new(source_branch: 'other-branch', target_branch: 'other-target'),
-      OpenStruct.new(source_branch: 'source-branch', target_branch: 'develop'),
-      OpenStruct.new(source_branch: 'source-branch', target_branch: 'master'),
+      OpenStruct.new(source_branch: 'other-branch', target_branch: 'other-target', sha: '654321'),
+      OpenStruct.new(source_branch: 'source-branch', target_branch: 'develop', sha: '13245'),
+      OpenStruct.new(source_branch: 'source-branch', target_branch: 'master', sha: '13245'),
     ]
   end
 
