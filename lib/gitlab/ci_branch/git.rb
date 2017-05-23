@@ -14,7 +14,8 @@ module Gitlab
 
       def find_by(name)
         needle = name.include?('/') ? name : "/#{name}"
-        find { |branch| branch.end_with?(needle) }
+        puts needle
+        find { |branch| branch =~ %r{#{needle}} }
       end
 
       private
@@ -25,12 +26,14 @@ module Gitlab
     end
 
     class GitDistance
+      LARGE_NUMBER = 1_000_000
       def initialize
         @current_sha ||= ENV['CI_COMMIT_SHA'] || `git rev-parse HEAD`.strip
       end
 
       def from(branch)
-        `git rev-list --boundary #{@current_sha}...#{branch} | wc -l`.strip
+        distance = `git rev-list --boundary #{@current_sha}...#{branch} | wc -l`.strip
+        distance.empty? ? LARGE_NUMBER : distance
       end
     end
   end
