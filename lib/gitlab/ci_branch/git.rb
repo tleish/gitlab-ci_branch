@@ -32,7 +32,7 @@ module Gitlab
 
       def from(branch)
         distance = `git rev-list --boundary #{@current_sha}...#{branch} | wc -l`.strip
-        distance.empty? ? LARGE_NUMBER : distance
+        distance.empty? ? LARGE_NUMBER : distance.to_i
       end
     end
   end
