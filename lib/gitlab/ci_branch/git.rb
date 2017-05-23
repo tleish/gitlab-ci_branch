@@ -14,7 +14,6 @@ module Gitlab
 
       def find_by(name)
         needle = name.include?('/') ? name : "/#{name}"
-        puts needle
         find { |branch| branch =~ %r{#{needle}} }
       end
 
