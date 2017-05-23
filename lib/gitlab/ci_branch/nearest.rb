@@ -3,7 +3,7 @@ require_relative 'git'
 module Gitlab
   module CiBranch
     class Nearest
-      VERY_BIG_NUMBER = 1_000_000
+      MAX_COMMITS = 50
 
       def initialize(branches, git_distance)
         @branches = branches
@@ -11,7 +11,8 @@ module Gitlab
       end
 
       def branch
-        nearest = distances.min_by { |_, commit_count| commit_count }
+        nearest = distances.select { |_, commit_count| commit_count <= MAX_COMMITS } .
+                            min_by { |_, commit_count| commit_count }
         nearest ? [nearest.first] : []
       end
 
