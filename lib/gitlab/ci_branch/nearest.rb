@@ -3,7 +3,7 @@ require_relative 'git'
 module Gitlab
   module CiBranch
     class Nearest
-      MAX_COMMITS = 50
+      MAX_COMMITS = 500
 
       def initialize(branches, git_distance)
         @branches = branches
