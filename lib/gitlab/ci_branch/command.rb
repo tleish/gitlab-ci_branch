@@ -84,17 +84,14 @@ module Gitlab
 
       def nearest
         return [] if @options[:default_branches].empty?
-        branches = @options[:default_branches].split(',').
-            map(&:strip).
-            map { |branch| @git_branch.find_by(branch) }.
-            compact
+        branches = @git_branch.find_by(@options[:default_branches].split(',').map(&:strip))
         git_distance = Gitlab::CiBranch::GitDistance.new
         Gitlab::CiBranch::Nearest.new(branches, git_distance).branch
       end
 
       def target_branches
         branches = Gitlab::CiBranch::MergeRequests.new(project_id: @options[:api_project_id]).target_branches
-        branches.map { |branch| @git_branch.find_by(branch) }.compact
+        @git_branch.find_by(branches)
       end
 
       def guess_api_endpoint

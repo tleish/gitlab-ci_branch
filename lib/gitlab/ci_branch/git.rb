@@ -12,9 +12,11 @@ module Gitlab
         @branches.each { |branch| yield branch }
       end
 
-      def find_by(name)
-        needle = name.include?('/') ? name : "/#{name}"
-        find { |branch| branch =~ %r{#{needle}} }
+      def find_by(branches = [])
+        Array(branches).map do |branch_name|
+          branch_needle = branch_name.include?('/') ? name : "/#{branch_name}"
+          select { |branch| branch =~ %r{#{branch_needle}} }
+        end.flatten.compact
       end
 
       private
