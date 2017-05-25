@@ -91,6 +91,7 @@ module Gitlab
 
       def target_branches
         branches = Gitlab::CiBranch::MergeRequests.new(project_id: @options[:api_project_id]).target_branches
+        branches.map! { |branch| "/#{branch}$" }
         @git_branch.find_by(branches)
       end
 

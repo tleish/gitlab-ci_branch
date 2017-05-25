@@ -14,7 +14,7 @@ module Gitlab
 
       def find_by(branches = [])
         Array(branches).map do |branch_name|
-          branch_needle = branch_name.include?('/') ? name : "/#{branch_name}"
+          branch_needle = branch_name.include?('/') ? branch_name : "/#{branch_name}"
           select { |branch| branch =~ %r{#{branch_needle}} }
         end.flatten.compact
       end
